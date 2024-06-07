@@ -1,0 +1,10 @@
+alter table users add column password varchar(250);
+
+alter table directmessages alter column senderuserid drop not null
+alter table groupmessages alter column senderuserid drop not null
+alter table textchannelmessages alter column senderuserid drop not null
+alter table directs alter column firstuserid drop not null
+alter table directs alter column seconduserid drop not null
+
+alter table servers alter column owner_id drop not null
+alter table groups alter column owner_id drop not null

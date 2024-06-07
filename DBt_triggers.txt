@@ -1,0 +1,53 @@
+CREATE OR REPLACE FUNCTION delete_user_dependencies()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS
+$$
+BEGIN
+		update directmessages
+		set senderuserid = null
+		where senderuserid = old.user_id;
+		update groupmessages
+		set senderuserid = null
+		where senderuserid = old.user_id;
+		update textchannelmessages
+		set senderuserid = null
+		where senderuserid = old.user_id;
+        update servers
+		set owner_id = null
+		where owner_id = old.user_id;
+		update groups
+		set owner_id = null
+		where owner_id = old.user_id;
+		update directs
+		set firstuserid = null
+		where firstuserid = old.user_id;
+		update directs
+		set seconduserid = null
+		where seconduserid = old.user_id;
+		delete from authorizedapplist where user_id = old.user_id;
+		delete from connectionlist where user_id = old.user_id;
+		delete from devicelist where user_id = old.user_id;
+		delete from friendlist where firstuserid = old.user_id;
+		delete from friendlist where seconduserid = old.user_id;
+		delete from friendrequests where senderuserid = old.user_id;
+		delete from friendrequests where receiveruserid = old.user_id;
+		delete from servermemberlist where user_id = old.user_id;
+		delete from groupmemberlist where user_id = old.user_id;
+		delete from voicechannelmemberlist where user_id = old.user_id;
+		
+		
+		
+		
+		
+		
+		
+		
+
+    RETURN old;
+END;
+$$ ;
+CREATE TRIGGER delete_user_trigger
+BEFORE delete ON users
+FOR EACH ROW
+EXECUTE FUNCTION delete_user_dependencies();
