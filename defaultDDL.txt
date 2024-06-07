@@ -1,0 +1,50 @@
+create table users (user_ID varchar(50) not null,username varchar(255) not null,settings JSONB  not null, status varchar(255)  not null, nickName varchar(255),primary key(user_ID))
+
+create table roles (role_ID varchar(50) not null,server_ID varchar(50) not null,name varchar(255) not null,premissions JSONB not null, primary key(role_ID),foreign key(server_ID) references servers)
+
+
+create table servers (server_ID varchar(50) not null,name varchar(255) not null,settings JSONB not null, owner_ID varchar(50) not null,primary key(server_ID),foreign key(owner_ID) references users,unique(name))
+
+create table groups (group_ID varchar(50) not null,name varchar(255) not null,settings JSONB not null, owner_ID varchar(50) not null,primary key(group_ID),foreign key(owner_ID) references users)
+
+create table serverMemberList (user_ID varchar(50) not null,server_ID varchar(50) not null,role_ID varchar(50),nickname varchar(250),primary key(user_ID,server_ID),foreign key(user_ID) references users,foreign key(server_ID) references servers,foreign key(role_ID) references roles)
+
+create table voiceChannels (voiceChannel_ID varchar(50) not null,server_ID varchar(50) not null,name varchar(255) not null,settings jsonb not null,primary key(voiceChannel_ID),foreign key(server_ID) references servers,unique(server_ID,name))
+
+create table events (event_ID varchar(50) not null ,name varchar(255) not null,description varchar(450),startDate timestamp not null,endDate timestamp,settings jsonb not null,primary key(event_ID))
+
+create table textChannels (textChannel_ID varchar(50) not null,server_ID varchar(50) not null,name varchar(255) not null,settings jsonb not null,primary key(textChannel_ID),foreign key(server_ID) references servers,unique(server_ID,name))
+
+create table apps (app_ID varchar(50) not null,name varchar(255) not null,url varchar(255) not null,premissions jsonb not null,settings jsonb not null,primary key(app_ID))
+
+create table devices (device_ID varchar(50) not null,name varchar(255) not null,OS varchar(255) not null,location varchar(450) not null,primary key(device_ID))
+
+create table connections (connection_ID varchar(50) not null,name varchar(255) not null,type varchar(255) not null,settings jsonb not null,primary key(connection_ID))
+
+create table friendRequests (friendRequest_ID varchar(50) not null,senderUserID varchar(50) not null,receiverUserID varchar(50) not null,text varchar(450),primary key (friendRequest_ID), foreign key (senderUserID) references users,foreign key (receiverUserID) references users)
+
+create table directs (direct_ID varchar(50) not null,firstUserID varchar(50) not null,secondUserID varchar(50) not null,settings jsonb not null,primary key (direct_ID), foreign key (firstUserID) references users,foreign key (firstUserID) references users)
+
+create table medias (media_ID varchar (50) not null, name varchar(255) not null, URL varchar(450) not null, type varchar(255) not null,creationDate timestamp not null, properties jsonb not null, primary key (media_ID) )
+
+create table directMessages ( message_ID varchar(50)  not null, senderUserID varchar(50) not null, direct_ID varchar(50) not null, media_ID varchar(50) , text varchar(2000) not null,sendingDate timestamp not null,pinnedDate timestamp, editDate timestamp, primary key(message_ID), foreign key(senderUserID) references users , foreign key(direct_ID) references directs, foreign key(media_ID) references medias)
+
+create table groupMessages ( message_ID varchar(50)  not null, senderUserID varchar(50) not null, group_ID varchar(50) not null, media_ID varchar(50) , text varchar(2000) not null,sendingDate timestamp not null,pinnedDate timestamp, editDate timestamp, primary key(message_ID), foreign key(senderUserID) references users , foreign key(group_ID) references groups, foreign key(media_ID) references medias)
+
+create table textChannelMessages ( message_ID varchar(50)  not null, senderUserID varchar(50) not null, textChannel_ID varchar(50) not null, media_ID varchar(50) , text varchar(2000) not null,sendingDate timestamp not null,pinnedDate timestamp, editDate timestamp, primary key(message_ID), foreign key(senderUserID) references users , foreign key(textChannel_ID) references textChannels, foreign key(media_ID) references medias)
+
+create table voiceChannelMemberList (user_ID varchar(50) not null,voiceChannel_ID varchar(50) not null,primary key(user_ID),foreign key(user_ID) references users,foreign key(voiceChannel_ID) references voiceChannels)
+
+create table authorizedAppList  (user_ID varchar(50) not null,app_ID varchar(50) not null,primary key(user_ID,app_ID),foreign key(user_ID) references users,foreign key(app_ID) references apps)
+
+create table connectionList  (user_ID varchar(50) not null,connection_ID varchar(50) not null,primary key(user_ID,connection_ID),foreign key(user_ID) references users,foreign key(connection_ID) references connections)
+
+create table deviceList  (user_ID varchar(50) not null,device_ID varchar(50) not null,primary key(user_ID,device_ID),foreign key(user_ID) references users,foreign key(device_ID) references devices)
+
+create table friendList (firstUserID varchar(50) not null ,secondUserID varchar(50) not null,primary key(firstUserID,secondUserID),foreign key(firstUserID) references users,foreign key(secondUserID) references users)
+
+create table groupMemberList (user_ID varchar(50) not null,group_ID varchar(50) not null,primary key(user_ID,group_ID),foreign key(user_ID) references users,foreign key(group_ID) references groups)
+
+create table eventList (server_ID varchar(50) not null,event_ID varchar(50) not null,primary key(server_ID,event_ID),foreign key(server_ID) references servers,foreign key(event_ID) references events)
+
+create table textChannelList (server_ID varchar(50) not null,textChannel_ID varchar(50) not null,primary key(textChannel_ID),foreign key(server_ID) references servers,foreign key(textChannel_ID) references textChannels)
