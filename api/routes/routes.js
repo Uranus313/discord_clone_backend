@@ -155,6 +155,41 @@ router.post("/servers/",async (req,res) =>{
         res.status(400).send("something went wrong");
     }
 });
+router.post("/events/",async (req,res) =>{
+    const {error} = validateEvents(req.body);
+    if(error){
+        res.status(400).send(error.details[0].message);
+        return;
+    };
+    let server = await dbclient.getServers({server_ID: req.body.server_ID});
+    if (server.length == 0){
+        res.status(400).send("there's no server wih this ID");
+        return;
+    }
+
+
+
+    let event_ID = generateRandomString(50);
+
+    while(true){
+
+        let events = await dbclient.getEvents({event_ID: event_ID});
+        if(events.length == 0){
+            break;
+        }
+        event_ID = generateRandomString(50);
+    } 
+
+    try {
+
+        let result = await dbclient.insertEvent({event_ID: event_ID,description: req.body.description,startDate:req.body.startDate,endDate:req.body.endDate,settings: req.body.settings,name: req.body.name});
+        let result2 = await  dbclient.addEventToServer({server_ID : req.body.server_ID,event_ID: event_ID});
+        res.send(result+" \n"+result2);
+    } catch (error) {
+        console.log(error.detail);
+        res.status(400).send("something went wrong");
+    }
+});
 router.post("/friends/",async (req,res) => {
     const {error} = validateFriends(req.body);
     if(error){
@@ -224,6 +259,17 @@ function validateServers(server){
         owner_ID : Joi.string().max(50).min(1).required()
     });
     return schema.validate(server);
+}
+function validateEvents(event){
+    const schema = Joi.object({
+        server_ID : Joi.string().max(50).min(1).required(),
+        name : Joi.string().max(255).min(1).required(),
+        settings : Joi.object().required(),
+        description : Joi.string().max(450).min(1),
+        startDate : Joi.date().required(),
+        endDate : Joi.date()
+    });
+    return schema.validate(event);
 }
 function validateFriends(friends){
     const schema = Joi.object({

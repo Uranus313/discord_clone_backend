@@ -26,6 +26,13 @@ class DBClient{
             return server.rows;
         
       }
+      async getEvents({event_ID}){
+        
+        const event = await this.client.query("select * from events where event_ID = $1",[event_ID]);
+        // console.log(user.rows);
+        return event.rows;
+    
+      }
       async getFriends({user1_ID,user2_ID}){
         
         let friends = await this.client.query("select * from friendlist where firstuserid = $1 and seconduserid = $2",[user1_ID,user2_ID]);
@@ -34,7 +41,7 @@ class DBClient{
       }
         return friends.rows;
     
-  }    
+  }      
     async getUsers({user_ID,username,password}){
         if(user_ID){
             const user = await this.client.query("select * from users where user_ID = $1",[user_ID]);
@@ -152,6 +159,9 @@ class DBClient{
     async insertEvent({event_ID,name,description,startDate,endDate,settings}){
         if (endDate == undefined){
             endDate = null;
+        }
+        if (description == undefined){
+          description = null;
         }
         await this.client.query(`insert into events (event_id,name,description,startdate,enddate,settings) values ($1,$2,$3,$4,$5,$6);`,[event_ID,name,description,startDate,endDate,settings]);
         return("inserted");
