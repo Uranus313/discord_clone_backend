@@ -25,7 +25,16 @@ class DBClient{
             // console.log(user.rows);
             return server.rows;
         
-      }  
+      }
+      async getFriends({user1_ID,user2_ID}){
+        
+        let friends = await this.client.query("select * from friendlist where firstuserid = $1 and seconduserid = $2",[user1_ID,user2_ID]);
+      if(friends.rows.length == 0){
+        friends = await this.client.query("select * from friendlist where firstuserid = $1 and seconduserid = $2",[user2_ID,user1_ID]);
+      }
+        return friends.rows;
+    
+  }    
     async getUsers({user_ID,username,password}){
         if(user_ID){
             const user = await this.client.query("select * from users where user_ID = $1",[user_ID]);

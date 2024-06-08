@@ -155,7 +155,25 @@ router.post("/servers/",async (req,res) =>{
         res.status(400).send("something went wrong");
     }
 });
-
+router.post("/friends/",async (req,res) => {
+    const {error} = validateFriends(req.body);
+    if(error){
+        res.status(400).send(error.details[0].message);
+        return;
+    };
+    let friends = await dbclient.getFriends({user1_ID: req.body.user1_ID,user2_ID: req.body.user2_ID});
+    if (friends.length != 0){
+        res.status(400).send("these users are already friends");
+        return;
+    }
+    try {
+        let result = await dbclient.insertFriend({user1_ID: req.body.user1_ID,user2_ID: req.body.user2_ID});
+        res.send(result);
+    } catch (error) {
+        console.log(error.detail);
+        res.status(400).send("something went wrong");
+    }
+})
 function validateUsers(user){
     const schema = Joi.object({
         username: Joi.string().max(255).min(1).required(),
@@ -206,5 +224,12 @@ function validateServers(server){
         owner_ID : Joi.string().max(50).min(1).required()
     });
     return schema.validate(server);
+}
+function validateFriends(friends){
+    const schema = Joi.object({
+        user1_ID : Joi.string().max(50).min(1).required(),
+        user2_ID : Joi.string().max(50).min(1).required()
+    });
+    return schema.validate(friends);
 }
 module.exports = router;
