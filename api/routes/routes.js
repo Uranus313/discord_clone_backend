@@ -114,8 +114,21 @@ router.get("/signIn/",async (req,res) =>{
     }
     
 
-})
-
+});
+router.post("/groupMembers/",async (req,res) =>{
+    const {error} = validateGroupMember(req.body);
+    if(error){
+        res.status(400).send(error.details[0].message);
+        return;
+    };
+    try {
+        let result = await dbclient.addUserToGroup({user_ID: req.body.user_ID,group_ID: req.body.group_ID});
+        res.send(result);
+    } catch (error) {
+        console.log(error.detail);
+        res.status(400).send("something went wrong");
+    }
+});
 function validateUsers(user){
     const schema = Joi.object({
         username: Joi.string().max(255).min(1).required(),
@@ -148,6 +161,14 @@ function validateDelete(user){
     const schema = Joi.object({
         user_ID: Joi.string().length(50).required(),
         password: Joi.string().max(255).min(8).required()
+    });
+    return schema.validate(user);
+}
+function validateGroupMember(user){
+    const schema = Joi.object({
+        user_ID: Joi.string().max(50).min(1).required(),
+        group_ID: Joi.string().max(50).min(1).required(),
+
     });
     return schema.validate(user);
 }
