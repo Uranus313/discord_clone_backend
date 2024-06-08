@@ -19,6 +19,13 @@ class DBClient{
           await this.client.query(`insert into users (user_ID,password, username, settings, status, nickName) values ($1,$2,$3,$4,$5,$6);`,[user_ID,password,username,settings,status,nickName]);
           return("inserted");
       }
+      async getServers({server_ID}){
+        
+            const server = await this.client.query("select * from servers where server_ID = $1",[server_ID]);
+            // console.log(user.rows);
+            return server.rows;
+        
+      }  
     async getUsers({user_ID,username,password}){
         if(user_ID){
             const user = await this.client.query("select * from users where user_ID = $1",[user_ID]);

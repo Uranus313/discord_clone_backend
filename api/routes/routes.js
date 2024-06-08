@@ -129,6 +129,33 @@ router.post("/groupMembers/",async (req,res) =>{
         res.status(400).send("something went wrong");
     }
 });
+router.post("/servers/",async (req,res) =>{
+    const {error} = validateServers(req.body);
+    if(error){
+        res.status(400).send(error.details[0].message);
+        return;
+    };
+    let server_ID = generateRandomString(50);
+
+    while(true){
+
+        let servers = await dbclient.getServers({server_ID: server_ID});
+        if(servers.length == 0){
+            break;
+        }
+        server_ID = generateRandomString(50);
+    } 
+
+    try {
+
+        let result = await dbclient.insertServer({server_ID: server_ID,user_ID: req.body.owner_ID,settings: req.body.settings,name: req.body.name});
+        res.send(result);
+    } catch (error) {
+        console.log(error.detail);
+        res.status(400).send("something went wrong");
+    }
+});
+
 function validateUsers(user){
     const schema = Joi.object({
         username: Joi.string().max(255).min(1).required(),
@@ -171,5 +198,13 @@ function validateGroupMember(user){
 
     });
     return schema.validate(user);
+}
+function validateServers(server){
+    const schema = Joi.object({
+        name : Joi.string().max(255).min(1).required(),
+        settings : Joi.object().required(),
+        owner_ID : Joi.string().max(50).min(1).required()
+    });
+    return schema.validate(server);
 }
 module.exports = router;
