@@ -53,7 +53,7 @@ router.post("/adduser/", async (req,res) => {
         res.send(answer);
     } catch (error) {
         console.log(error);
-        res.status(500).send("something went wrong");   
+        res.status(500).send(error.detail);   
     }
 });
 router.put("/changeUser/",auth,async (req,res) =>{
@@ -80,7 +80,7 @@ router.put("/changeUser/",auth,async (req,res) =>{
         }
         res.send(result);
     } catch (error) {
-        res.status(500).send("something went wrong");
+        res.status(500).send(error.detail);
     }
 
 });
@@ -106,7 +106,7 @@ router.delete("/users/",auth,async (req,res) =>{
 
     } catch (error) {
         console.log(error);
-        res.status(500).send("something went wrong");
+        res.status(500).send(error.detail);
     }
 })
 router.get("/signIn/",async (req,res) =>{
@@ -130,7 +130,7 @@ router.get("/signIn/",async (req,res) =>{
         let token = jwt.sign(user,"my Secret");
         res.header("x-auth-token",token).send(user);
     } catch (error) {
-        res.status(500).send("something went wrong");
+        res.status(500).send(error.detail);
     }
     
 
@@ -146,7 +146,8 @@ router.post("/groupMembers/",auth,async (req,res) =>{
         res.send(result);
     } catch (error) {
         console.log(error.detail);
-        res.status(400).send("something went wrong");
+        res.status(500).send(error.detail);
+
     }
 });
 router.post("/servers/",auth,async (req,res) =>{
@@ -172,7 +173,8 @@ router.post("/servers/",auth,async (req,res) =>{
         res.send(result);
     } catch (error) {
         console.log(error.detail);
-        res.status(400).send("something went wrong");
+               res.status(500).send(error.detail);
+
     }
 });
 router.post("/events/",auth,async (req,res) =>{
@@ -207,7 +209,8 @@ router.post("/events/",auth,async (req,res) =>{
         res.send(result+" \n"+result2);
     } catch (error) {
         console.log(error);
-        res.status(400).send("something went wrong");
+               res.status(500).send(error.detail);
+
     }
 });
 router.post("/friends/",auth,async (req,res) => {
@@ -226,7 +229,8 @@ router.post("/friends/",auth,async (req,res) => {
         res.send(result);
     } catch (error) {
         console.log(error.detail);
-        res.status(400).send("something went wrong");
+               res.status(500).send(error.detail);
+
     }
 })
 function validateUsers(user){
