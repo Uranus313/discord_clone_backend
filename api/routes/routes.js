@@ -4,6 +4,7 @@ const DBClient = require("../../DBControl/dBconnection");
 
 const crypto = require('crypto');
 
+
 function generateRandomString(length) {
     const randomBytes = crypto.randomBytes(length/2);
     // console.log(randomBytes);
@@ -186,7 +187,7 @@ router.post("/events/",async (req,res) =>{
         let result2 = await  dbclient.addEventToServer({server_ID : req.body.server_ID,event_ID: event_ID});
         res.send(result+" \n"+result2);
     } catch (error) {
-        console.log(error.detail);
+        console.log(error);
         res.status(400).send("something went wrong");
     }
 });
@@ -212,7 +213,7 @@ router.post("/friends/",async (req,res) => {
 function validateUsers(user){
     const schema = Joi.object({
         username: Joi.string().max(255).min(1).required(),
-        password: Joi.string().max(255).min(8).required(),
+        password: Joi.string().max(50).min(8).required(),
         settings: Joi.object().required(),
         status: Joi.string().max(255).min(1).required(),
         nickName: Joi.string().max(255).min(1)
@@ -223,7 +224,7 @@ function validateUserChanges(user){
     const schema = Joi.object({
         user_ID: Joi.string().length(50).required(),
         username: Joi.string().max(255).min(1),
-        password: Joi.string().max(255).min(8),
+        password: Joi.string().max(50).min(8),
         settings: Joi.object(),
         status: Joi.string().max(255).min(1),
         nickName: Joi.string().max(255).min(1)
@@ -233,14 +234,14 @@ function validateUserChanges(user){
 function validateSignin(user){
     const schema = Joi.object({
         username: Joi.string().max(255).min(1).required(),
-        password: Joi.string().max(255).min(8).required()
+        password: Joi.string().max(50).min(8).required()
     });
     return schema.validate(user);
 }
 function validateDelete(user){
     const schema = Joi.object({
         user_ID: Joi.string().length(50).required(),
-        password: Joi.string().max(255).min(8).required()
+        password: Joi.string().max(50).min(8).required()
     });
     return schema.validate(user);
 }

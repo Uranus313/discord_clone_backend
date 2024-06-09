@@ -1,4 +1,19 @@
 const { Client } = require('pg');
+const bcrypt = require('bcrypt');
+
+async function hashPassword(plainTextPassword) {
+  const saltRounds = 10; // You can adjust this value as needed
+  const hash = await bcrypt.hash(plainTextPassword, saltRounds);
+  // Store the hash in your database
+  return hash;
+}
+async function comparePassword(plainTextPassword, hashedPasswordFromDB) {
+  const isMatch = await bcrypt.compare(plainTextPassword, hashedPasswordFromDB);
+  // Check if the password matches
+  return isMatch;
+}
+
+
 class DBClient{
   client;
     constructor(){
@@ -15,7 +30,7 @@ class DBClient{
         
     }
     async insertUser({user_ID,username,password,settings,status,nickName}){
-  
+          password = await hashPassword(password);
           await this.client.query(`insert into users (user_ID,password, username, settings, status, nickName) values ($1,$2,$3,$4,$5,$6);`,[user_ID,password,username,settings,status,nickName]);
           return("inserted");
       }
@@ -48,8 +63,16 @@ class DBClient{
             // console.log(user.rows);
             return user.rows;
         }else if(username && password){
-            const user = await this.client.query("select * from users where username = $1 and password = $2",[username,password]);
+            const user = await this.client.query("select * from users where username = $1 ",[username]);
+            if(user.rows.length != 0){
+              let matched = await comparePassword(password,user.rows[0].password);
+              if(matched == true){
+               return user.rows;
+              }
+              return [];
+            }
             return user.rows;
+
         }else if(username){
             const user = await this.client.query("select * from users where username = $1",[username]);
             return user.rows;
@@ -108,6 +131,8 @@ class DBClient{
             newValues.push(settings);
           }
           if (password ){
+            password = await hashPassword(password);
+
             counter++;
             pretext = "";
             if(counter > 2){
@@ -148,7 +173,8 @@ class DBClient{
     }
     async insertServer({user_ID,server_ID,settings,name}){
   
-        await this.client.query(`insert into servers (server_ID,owner_ID,name,settings) values ($1,$2,$3,$4);`,[server_ID,user_ID,name,settings]);
+        let server = await this.client.query(`insert into servers (server_ID,owner_ID,name,settings) values ($1,$2,$3,$4);`,[server_ID,user_ID,name,settings]);
+        console.log(server);
         return("inserted");
     }
     async insertFriend({user1_ID,user2_ID}){
@@ -168,6 +194,7 @@ class DBClient{
     }
     async addEventToServer({server_ID,event_ID}){
         await this.client.query(`insert into eventlist (server_id,event_id) values ($1,$2);`,[server_ID,event_ID]);
+        return("inserted");
     }
 }
 new DBClient();
