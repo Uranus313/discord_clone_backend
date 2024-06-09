@@ -1,9 +1,9 @@
 const express = require("express");
 const Joi = require("joi");
 const DBClient = require("../../DBControl/dBconnection");
-
+const jwt = require("jsonwebtoken");
 const crypto = require('crypto');
-
+const auth = require("../middleware/auth");
 
 function generateRandomString(length) {
     const randomBytes = crypto.randomBytes(length/2);
@@ -42,13 +42,21 @@ router.post("/adduser/", async (req,res) => {
 
     try {
         let answer = await dbclient.insertUser({user_ID : userID,username: req.body.username,password: req.body.password,settings:req.body.settings,status: req.body.status,nickName: req.body.nickName});
+        if(answer == "inserted"){
+            let user = await dbclient.getUsers({user_ID: userID});
+            user = user[0];
+            let token = jwt.sign(user,"my Secret");
+            res.header("x-auth-token",token).send(answer);
+
+            return;
+        }
         res.send(answer);
     } catch (error) {
         console.log(error);
         res.status(500).send("something went wrong");   
     }
 });
-router.put("/changeUser/",async (req,res) =>{
+router.put("/changeUser/",auth,async (req,res) =>{
     const {error} = validateUserChanges(req.body);
     if(error){
         res.status(400).send(error.details[0].message);
@@ -63,13 +71,20 @@ router.put("/changeUser/",async (req,res) =>{
     }
     try {
         let result = await dbclient.updateUser({user_ID: req.body.user_ID,status: req.body.status,username: req.body.username,nickName: req.body.nickName,settings: req.body.settings,password: req.body.password});
+        if(result == "the row updated"){
+            let user = await dbclient.getUsers({user_ID: req.body.user_ID});
+            user = user[0];
+            let token = jwt.sign(user,"my Secret");
+            res.header("x-auth-token",token).send(result);
+            return;
+        }
         res.send(result);
     } catch (error) {
         res.status(500).send("something went wrong");
     }
 
 });
-router.delete("/users/",async (req,res) =>{
+router.delete("/users/",auth,async (req,res) =>{
     const {error} = validateDelete(req.body);
     if(error){
         res.status(400).send(error.details[0].message);
@@ -109,14 +124,18 @@ router.get("/signIn/",async (req,res) =>{
             res.status(404).send("no user found");
             return;
         }
-        res.send(user);
+
+
+        user = user[0];
+        let token = jwt.sign(user,"my Secret");
+        res.header("x-auth-token",token).send(user);
     } catch (error) {
         res.status(500).send("something went wrong");
     }
     
 
 });
-router.post("/groupMembers/",async (req,res) =>{
+router.post("/groupMembers/",auth,async (req,res) =>{
     const {error} = validateGroupMember(req.body);
     if(error){
         res.status(400).send(error.details[0].message);
@@ -130,7 +149,7 @@ router.post("/groupMembers/",async (req,res) =>{
         res.status(400).send("something went wrong");
     }
 });
-router.post("/servers/",async (req,res) =>{
+router.post("/servers/",auth,async (req,res) =>{
     const {error} = validateServers(req.body);
     if(error){
         res.status(400).send(error.details[0].message);
@@ -156,7 +175,7 @@ router.post("/servers/",async (req,res) =>{
         res.status(400).send("something went wrong");
     }
 });
-router.post("/events/",async (req,res) =>{
+router.post("/events/",auth,async (req,res) =>{
     const {error} = validateEvents(req.body);
     if(error){
         res.status(400).send(error.details[0].message);
@@ -191,7 +210,7 @@ router.post("/events/",async (req,res) =>{
         res.status(400).send("something went wrong");
     }
 });
-router.post("/friends/",async (req,res) => {
+router.post("/friends/",auth,async (req,res) => {
     const {error} = validateFriends(req.body);
     if(error){
         res.status(400).send(error.details[0].message);
