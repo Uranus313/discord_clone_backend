@@ -111,6 +111,40 @@ router.delete("/users/",auth,async (req,res) =>{
         res.status(500).send(error.detail);
     }
 })
+router.delete("/massUsers/",auth,async (req,res) =>{
+    const {error} = validateUserList(req.body);
+    if(error){
+        res.status(400).send(error.details[0].message);
+        return;
+    };
+    try {
+        for (const user_ID of req.body.userList) {
+            const user = await dbclient.getUsers({ user_ID });
+
+            if (user.length === 0) {
+                res.status(400).send(`No user with this userID exists.\n userID: ${user_ID}`);
+                return;
+            }
+        }
+
+        for (const user_ID of req.body.userList) {
+            let result = await dbclient.deleteUser({user_ID: user_ID});
+
+
+            if (result != "user deleted successfully"){
+                res.status(500).send(`coulnd't delete the user with userID : ${user_ID} \n stopped deleting after it.`)
+                return;
+            }
+        }
+        
+        res.send("all selected users deleted");
+        return;
+
+    } catch (error) {
+        console.log(error);
+        res.status(500).send(error.detail);
+    }
+})
 router.get("/signIn/",async (req,res) =>{
 
     console.log(req.query);
@@ -263,8 +297,7 @@ function validateUsers(user){
         password: Joi.string().max(50).min(8).required(),
         settings: Joi.object().required(),
         status: Joi.string().max(255).min(1).required(),
-        nickName: Joi.string().max(255).min(1),
-        date: Joi.custom()
+        nickName: Joi.string().max(255).min(1)
     });
     return schema.validate(user);
 }
@@ -318,7 +351,7 @@ function validateEvents(event){
         settings : Joi2.object().required(),
         description : Joi2.string().max(450).min(1),
         startDate: Joi2.date().format(customDateFormat).raw().required()  , 
-        endDate : Joi2.date()
+        endDate : Joi2.date().format(customDateFormat).raw().required()
     });
     return schema.validate(event);
 }
@@ -328,5 +361,11 @@ function validateFriends(friends){
         user2_ID : Joi.string().max(50).min(1).required()
     });
     return schema.validate(friends);
+}
+function validateUserList(list){
+    const schema = Joi.object({
+        userList : Joi.array().items(Joi.string().max(50).min(1)).min(1).required()
+    });
+    return schema.validate(list);
 }
 module.exports = router;
