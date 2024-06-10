@@ -1,5 +1,7 @@
 const express = require("express");
 const Joi = require("joi");
+const JoiBase = require("@hapi/joi");
+const JoiDate = require("@hapi/joi-date");
 const DBClient = require("../../DBControl/dBconnection");
 const jwt = require("jsonwebtoken");
 const crypto = require('crypto');
@@ -121,7 +123,7 @@ router.get("/signIn/",async (req,res) =>{
         let user = await dbclient.getUsers({username: req.query.username,password: req.query.password});
         console.log(user)
         if(user.length == 0){
-            res.status(404).send("no user found");
+            res.status(404).send("useename or password is wrong");
             return;
         }
 
@@ -183,12 +185,28 @@ router.post("/events/",auth,async (req,res) =>{
         res.status(400).send(error.details[0].message);
         return;
     };
+    console.log(req.body.startDate);
+    let startDate = new Date(req.body.startDate);
+    let currentDate = new Date();
+    console.log(startDate);
+    console.log(currentDate);
+    if(startDate < currentDate){
+        res.status(400).send("event's start date is in the past");
+        return;
+    }
+    if(req.body.endDate){
+        let endDate = new Date(req.body.endDate);
+        if(endDate < startDate){
+            res.status(400).send("event's ending date shouldn't be earlier than its start");
+            return;
+        }
+    }
     let server = await dbclient.getServers({server_ID: req.body.server_ID});
     if (server.length == 0){
         res.status(400).send("there's no server wih this ID");
         return;
     }
-
+    
 
 
     let event_ID = generateRandomString(50);
@@ -206,10 +224,15 @@ router.post("/events/",auth,async (req,res) =>{
 
         let result = await dbclient.insertEvent({event_ID: event_ID,description: req.body.description,startDate:req.body.startDate,endDate:req.body.endDate,settings: req.body.settings,name: req.body.name});
         let result2 = await  dbclient.addEventToServer({server_ID : req.body.server_ID,event_ID: event_ID});
-        res.send(result+" \n"+result2);
+        res.send("event added");
+        // res.send(result+" \n"+result2);
     } catch (error) {
         console.log(error);
-               res.status(500).send(error.detail);
+        if(error.where.includes("checkevent")){
+        res.status(500).send("this event's time has conflict with another event");
+            return;
+        }
+        res.status(500).send(error.detail);
 
     }
 });
@@ -228,18 +251,20 @@ router.post("/friends/",auth,async (req,res) => {
         let result = await dbclient.insertFriend({user1_ID: req.body.user1_ID,user2_ID: req.body.user2_ID});
         res.send(result);
     } catch (error) {
-        console.log(error.detail);
+        console.log(error);
                res.status(500).send(error.detail);
 
     }
 })
 function validateUsers(user){
+
     const schema = Joi.object({
         username: Joi.string().max(255).min(1).required(),
         password: Joi.string().max(50).min(8).required(),
         settings: Joi.object().required(),
         status: Joi.string().max(255).min(1).required(),
-        nickName: Joi.string().max(255).min(1)
+        nickName: Joi.string().max(255).min(1),
+        date: Joi.custom()
     });
     return schema.validate(user);
 }
@@ -285,13 +310,15 @@ function validateServers(server){
     return schema.validate(server);
 }
 function validateEvents(event){
-    const schema = Joi.object({
-        server_ID : Joi.string().max(50).min(1).required(),
-        name : Joi.string().max(255).min(1).required(),
-        settings : Joi.object().required(),
-        description : Joi.string().max(450).min(1),
-        startDate : Joi.date().required(),
-        endDate : Joi.date()
+    const customDateFormat = "YYYY-MM-DD HH:mm:ss"; 
+    const Joi2 = JoiBase.extend(JoiDate);
+    const schema = Joi2.object({
+        server_ID : Joi2.string().max(50).min(1).required(),
+        name : Joi2.string().max(255).min(1).required(),
+        settings : Joi2.object().required(),
+        description : Joi2.string().max(450).min(1),
+        startDate: Joi2.date().format(customDateFormat).raw().required()  , 
+        endDate : Joi2.date()
     });
     return schema.validate(event);
 }
