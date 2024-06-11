@@ -60,8 +60,13 @@ router.post("/adduser/", async (req,res) => {
 });
 router.put("/changeUser/",auth,async (req,res) =>{
     const {error} = validateUserChanges(req.body);
+
     if(error){
         res.status(400).send(error.details[0].message);
+        return;
+    }
+    if(req.user.user_ID != req.body.user_ID){
+        res.status(400).send("you cant change another user");
         return;
     }
     if(req.body.username){
@@ -92,6 +97,10 @@ router.delete("/users/",auth,async (req,res) =>{
         res.status(400).send(error.details[0].message);
         return;
     };
+    if(req.user.user_ID != req.body.user_ID){
+        res.status(400).send("you cant delete another user");
+        return;
+    }
     try {
         let user = await dbclient.getUsers({user_ID: req.body.user_ID});
         if(user.length == 0){
@@ -177,6 +186,10 @@ router.post("/groupMembers/",auth,async (req,res) =>{
         res.status(400).send(error.details[0].message);
         return;
     };
+    if(req.user.user_ID != req.body.user_ID){
+        res.status(400).send("you cant add another user to a group");
+        return;
+    }
     try {
         let result = await dbclient.addUserToGroup({user_ID: req.body.user_ID,group_ID: req.body.group_ID});
         res.send(result);
@@ -192,6 +205,10 @@ router.post("/servers/",auth,async (req,res) =>{
         res.status(400).send(error.details[0].message);
         return;
     };
+    if(req.user.user_ID != req.body.owner_ID){
+        res.status(400).send("you cant make a server with another user as owner");
+        return;
+    }
     let server_ID = generateRandomString(50);
 
     while(true){
@@ -276,6 +293,10 @@ router.post("/friends/",auth,async (req,res) => {
         res.status(400).send(error.details[0].message);
         return;
     };
+    if(req.user.user_ID != req.body.user1_ID && req.user.user_ID != req.body.user2_ID ){
+        res.status(400).send("you cant make 2 other users friends");
+        return;
+    }
     let friends = await dbclient.getFriends({user1_ID: req.body.user1_ID,user2_ID: req.body.user2_ID});
     if (friends.length != 0){
         res.status(400).send("these users are already friends");
