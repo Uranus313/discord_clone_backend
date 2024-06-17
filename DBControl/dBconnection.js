@@ -58,7 +58,17 @@ class DBClient{
     
   }      
     async getUsers({user_ID,username,password}){
-        if(user_ID){
+      if(user_ID && password){
+        const user = await this.client.query("select * from users where user_ID = $1 ",[user_ID]);
+        if(user.rows.length != 0){
+          let matched = await comparePassword(password,user.rows[0].password);
+          if(matched == true){
+           return user.rows;
+          }
+          return [];
+        }
+        return user.rows;
+      }else if(user_ID){
             const user = await this.client.query("select * from users where user_ID = $1",[user_ID]);
             // console.log(user.rows);
             return user.rows;
@@ -167,8 +177,8 @@ class DBClient{
         return("user deleted successfully");
     }
     async addUserToGroup({user_ID,group_ID}){
-  
-        await this.client.query(`insert into groupmemberlist (user_ID,group_ID) values ($1,$2);`,[user_ID,group_ID]);
+        console.log("kk")
+        let answer = await this.client.query(`insert into groupmemberlist (user_ID,group_ID) values ($1,$2);`,[user_ID,group_ID]);
         return("inserted");
     }
     async insertServer({user_ID,server_ID,settings,name}){

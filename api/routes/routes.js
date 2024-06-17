@@ -48,7 +48,7 @@ router.post("/adduser/", async (req,res) => {
             let user = await dbclient.getUsers({user_ID: userID});
             user = user[0];
             let token = jwt.sign(user,"my Secret");
-            res.header("x-auth-token",token).send(answer);
+            res.header("x-auth-token",token).send(user);
 
             return;
         }
@@ -65,7 +65,7 @@ router.put("/changeUser/",auth,async (req,res) =>{
         res.status(400).send(error.details[0].message);
         return;
     }
-    if(req.user.user_ID != req.body.user_ID){
+    if(req.user.user_id != req.body.user_ID){
         res.status(400).send("you cant change another user");
         return;
     }
@@ -97,18 +97,15 @@ router.delete("/users/",auth,async (req,res) =>{
         res.status(400).send(error.details[0].message);
         return;
     };
-    if(req.user.user_ID != req.body.user_ID){
+    if(req.user.user_id != req.body.user_ID){
         res.status(400).send("you cant delete another user");
         return;
     }
     try {
-        let user = await dbclient.getUsers({user_ID: req.body.user_ID});
+        let user = await dbclient.getUsers({user_ID: req.body.user_ID,password: req.body.password});
+
         if(user.length == 0){
-            res.status(400).send("no user with this user_ID exists");
-            return;
-        }
-        if(user[0].password != req.body.password){
-            res.status(400).send("wrong password");
+            res.status(404).send("user_ID or password is wrong");
             return;
         }
         let result = await dbclient.deleteUser({user_ID: req.body.user_ID});
@@ -186,10 +183,11 @@ router.post("/groupMembers/",auth,async (req,res) =>{
         res.status(400).send(error.details[0].message);
         return;
     };
-    if(req.user.user_ID != req.body.user_ID){
+    if(req.user.user_id != req.body.user_ID){
         res.status(400).send("you cant add another user to a group");
         return;
     }
+    
     try {
         let result = await dbclient.addUserToGroup({user_ID: req.body.user_ID,group_ID: req.body.group_ID});
         res.send(result);
@@ -205,7 +203,7 @@ router.post("/servers/",auth,async (req,res) =>{
         res.status(400).send(error.details[0].message);
         return;
     };
-    if(req.user.user_ID != req.body.owner_ID){
+    if(req.user.user_id != req.body.owner_ID){
         res.status(400).send("you cant make a server with another user as owner");
         return;
     }
@@ -293,7 +291,7 @@ router.post("/friends/",auth,async (req,res) => {
         res.status(400).send(error.details[0].message);
         return;
     };
-    if(req.user.user_ID != req.body.user1_ID && req.user.user_ID != req.body.user2_ID ){
+    if(req.user.user_id != req.body.user1_ID && req.user.user_id != req.body.user2_ID ){
         res.status(400).send("you cant make 2 other users friends");
         return;
     }
@@ -324,7 +322,7 @@ function validateUsers(user){
 }
 function validateUserChanges(user){
     const schema = Joi.object({
-        user_ID: Joi.string().length(50).required(),
+        user_ID: Joi.string().max(50).min(1).required(),
         username: Joi.string().max(255).min(1),
         password: Joi.string().max(50).min(8),
         settings: Joi.object(),
@@ -342,7 +340,7 @@ function validateSignin(user){
 }
 function validateDelete(user){
     const schema = Joi.object({
-        user_ID: Joi.string().length(50).required(),
+        user_ID: Joi.string().max(50).min(1).required(),
         password: Joi.string().max(50).min(8).required()
     });
     return schema.validate(user);
